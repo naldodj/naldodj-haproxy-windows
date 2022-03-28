@@ -19,7 +19,9 @@ HAProxy is a free, very fast and reliable solution offering [high availability](
 
 #### QuickStart(use quiet mode)
 
-    haproxy.exe -f config.json -q
+    haproxy.exe -f haproxy.config.json -q
+    or
+    haproxy.exe -f haproxy.config.cfg -q
 
 ```
 Usage : haproxy [-f <cfgfile>]* [ -vdVD ] [ -n <maxconn> ] [ -N <maxpconn> ]
