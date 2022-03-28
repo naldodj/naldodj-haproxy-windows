@@ -1,5 +1,4 @@
 <div align="center">
-    # naldodj-haproxy-windows
     <h1>haproxy-windows haproxy-2.6-dev4</h1>
     <img src="./HAProxyCE.png" width="250" />
     <p align="center">
