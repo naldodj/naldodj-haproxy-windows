@@ -88,7 +88,7 @@ Compilation and installation of HAProxy in Windows
    
     # delete trash (C:/cygwin64/home/YOUR_USER)
     cd ..
-    rm -rf ./haproxy-2.6-dev4
+    rm -rf ./haproxy-2.9-dev1
    
     # exit cygwin6 terminal
     exit
