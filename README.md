@@ -1,5 +1,5 @@
 <div align="center">
-    <h1>haproxy-windows haproxy-2.6-dev4</h1>
+    <h1>haproxy-windows haproxy-2.9-dev1</h1>
     <img src="./HAProxyCE.png" width="250" />
     <p align="center">
         HAProxy Community Edition For Windows. 
