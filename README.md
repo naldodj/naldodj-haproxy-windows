@@ -62,10 +62,10 @@ Compilation and installation of HAProxy in Windows
     ```
 4. Download source code (inside cygwin64 terminal)
     ```
-    wget http://www.haproxy.org/download/2.6/src/devel/haproxy-2.6-dev4.tar.gz
-    tar xzvf haproxy-2.6-dev4.tar.gz
-    rm -rf ./haproxy-2.6-dev4.tar.gz 
-    cd haproxy-2.6-dev4
+    wget https://www.haproxy.org/download/2.9/src/devel/haproxy-2.9-dev1.tar.gz
+    tar xzvf haproxy-2.9-dev1.tar.gz
+    rm -rf ./haproxy-2.9-dev1.tar.gz 
+    cd haproxy-2.9-dev1
     ```
 5. Build (inside cygwin64 terminal)
     ```
