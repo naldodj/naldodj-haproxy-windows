@@ -1,4 +1,4 @@
-name: Build and Test HAProxy
+name: Build and Test HAProxy 3.0
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-3.0
 
     steps:
       - name: Checkout code
@@ -23,18 +23,19 @@ jobs:
           Invoke-WebRequest -Uri https://cygwin.com/setup-x86_64.exe -OutFile setup-x86_64.exe
           .\setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P ldd -s https://linorg.usp.br/cygwin/
 
-      - name: Download latest HAProxy source code
-        run: |
-          Invoke-WebRequest -Uri $(curl -s https://www.haproxy.org/download/ | Select-String -Pattern 'href="haproxy-.*tar.gz"' | ForEach-Object { $_ -replace '^.*href="([^"]+)".*$', '$1' }) -OutFile haproxy-latest.tar.gz
-          tar xzvf haproxy-latest.tar.gz
-          rm -rf ./haproxy-latest.tar.gz
-          cd haproxy-*/
-
       - name: Open Cygwin
         run: |
-          cd c:\cygwin64
+          # Criar arquivo Cygwin.bat na pasta c:\cygwin64
+          echo start "" "%~dp0\bin\mintty.exe" -i /Cygwin-Terminal.ico /usr/bin/bash.exe --login -i > c:\cygwin64\Cygwin.bat
           cmd.exe /c ".\Cygwin.bat"
 
+      - name: Download 3.0 HAProxy source code
+        run: |
+          wget https://www.haproxy.org/download/3.0/src/devel/haproxy-3.0-dev1.tar.gz
+          tar xzvf haproxy-3.0-dev1.tar.gz
+          rm -rf ./haproxy-3.0-dev1.tar.gz 
+          cd haproxy-3.0-dev1
+          
       - name: Build HAProxy
         run: |
           make TARGET=cygwin USE_OPENSSL=1 USE_ZLIB=1
@@ -42,10 +43,10 @@ jobs:
       - name: Copy HAProxy executable and dependencies
         run: |
           dependencies=$(ldd ./haproxy.exe | awk '{print $3}')
-          mkdir -p /cygdrive/c/haproxy-latest
-          cp ./haproxy.exe /cygdrive/c/haproxy-latest
+          mkdir -p /cygdrive/c/haproxy-3.0
+          cp ./haproxy.exe /cygdrive/c/haproxy-3.0
           for dep in $dependencies; do
-              cp "$dep" /cygdrive/c/haproxy-latest
+              cp "$dep" /cygdrive/c/haproxy-3.0
           done
           cd ..
           rm -rf ./haproxy-*/
@@ -53,5 +54,5 @@ jobs:
 
       - name: Test HAProxy
         run: |
-          cd C:\haproxy-latest
+          cd C:\haproxy-3.0
           haproxy.exe -v
