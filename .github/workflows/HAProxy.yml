@@ -25,9 +25,7 @@ jobs:
 
       - name: Open Cygwin
         run: |
-          # Criar arquivo Cygwin.bat na pasta c:\cygwin64
-          echo start "" "%~dp0\bin\mintty.exe" -i /Cygwin-Terminal.ico /usr/bin/bash.exe --login -i > c:\cygwin64\Cygwin.bat
-          cmd.exe /c ".\Cygwin.bat"
+          .\bash --login -i
 
       - name: Download 3.0 HAProxy source code
         run: |
