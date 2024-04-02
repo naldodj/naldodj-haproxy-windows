@@ -1,3 +1,4 @@
+
 name: Build and Test HAProxy 3.0
 
 on:
@@ -25,6 +26,7 @@ jobs:
 
       - name: Open Cygwin
         run: |
+          dir
           cmd.exe /c ".\Cygwin.bat"
 
       - name: Download 3.0 HAProxy source code
