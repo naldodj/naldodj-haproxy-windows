@@ -1,0 +1,53 @@
+name: Build and Test HAProxy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download and install Cygwin
+        run: |
+          wget -O setup-x86_64.exe https://cygwin.com/setup-x86_64.exe
+          cp setup-x86_64.exe /cygwin64
+          cd /cygwin64
+          setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P ldd
+          Cygwin.bat
+
+      - name: Download latest HAProxy source code
+        run: |
+          wget $(curl -s https://www.haproxy.org/download/ | grep -o 'href="haproxy-.*tar.gz"' | head -n 1 | cut -d '"' -f 2)
+          tar xzvf haproxy-*.tar.gz
+          rm -rf ./haproxy-*.tar.gz
+          cd haproxy-*/
+
+      - name: Build HAProxy
+        run: |
+          make TARGET=cygwin USE_OPENSSL=1 USE_ZLIB=1
+
+      - name: Copy HAProxy executable and dependencies
+        run: |
+          dependencies=$(ldd ./haproxy.exe | awk '{print $3}')
+          mkdir -p /cygdrive/c/haproxy-latest
+          cp ./haproxy.exe /cygdrive/c/haproxy-latest
+          for dep in $dependencies; do
+              cp "$dep" /cygdrive/c/haproxy-latest
+          done
+          cd ..
+          rm -rf ./haproxy-*/
+          exit
+
+      - name: Test HAProxy
+        run: |
+          cd C:\haproxy-latest
+          haproxy.exe -v
