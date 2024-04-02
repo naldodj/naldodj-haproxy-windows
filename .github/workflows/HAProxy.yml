@@ -19,8 +19,8 @@ jobs:
       - name: Download and install Cygwin
         run: |
           Invoke-WebRequest -Uri https://cygwin.com/setup-x86_64.exe -OutFile setup-x86_64.exe
-          cp setup-x86_64.exe /cygwin64
-          cd /cygwin64
+          cp setup-x86_64.exe c:\cygwin64
+          cd c:\cygwin64
           setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P ldd
           Cygwin.bat
 
