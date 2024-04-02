@@ -23,17 +23,17 @@ jobs:
           Invoke-WebRequest -Uri https://cygwin.com/setup-x86_64.exe -OutFile setup-x86_64.exe
           .\setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P ldd -s https://linorg.usp.br/cygwin/
 
-      - name: Open Cygwin
-        run: |
-          cd c:\cygwin64
-          cmd.exe /c ".\Cygwin.bat"
-
       - name: Download latest HAProxy source code
         run: |
           Invoke-WebRequest -Uri $(curl -s https://www.haproxy.org/download/ | Select-String -Pattern 'href="haproxy-.*tar.gz"' | ForEach-Object { $_ -replace '^.*href="([^"]+)".*$', '$1' }) -OutFile haproxy-latest.tar.gz
           tar xzvf haproxy-latest.tar.gz
           rm -rf ./haproxy-latest.tar.gz
           cd haproxy-*/
+
+      - name: Open Cygwin
+        run: |
+          cd c:\cygwin64
+          cmd.exe /c ".\Cygwin.bat"
 
       - name: Build HAProxy
         run: |
