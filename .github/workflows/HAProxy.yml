@@ -25,7 +25,7 @@ jobs:
 
       - name: Open Cygwin
         run: |
-          .\bash --login -i
+          .\bin\bash --login -i
 
       - name: Download 3.0 HAProxy source code
         run: |
