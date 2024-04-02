@@ -1,59 +1,126 @@
+name: Install Cygwin Action
+description: GitHub Action to install Cygwin
 
-name: Build and Test HAProxy 3.0
+inputs:
+  platform:
+    description: Platform [x86, x86_64]
+    required: false
+    default: x86_64
+    packages: >-
+      wget
+      gcc-g++
+      make
+      libssl-devel
+      zlib-devel
+      ldd
+    description: Packages to install
+    required: false
+  install-dir:
+    # by default, install to C:\cygwin rather than the platform dependent
+    # default to make everything simpler
+    description: Installation directory
+    required: false
+    default: C:\cygwin
+  check-sig:
+    description: Should the setup.ini file signature be checked?
+    required: false
+    default: true
+  pubkeys:
+    description: Absolute paths of extra public key files (RFC4880 format), separated by whitespace
+    required: false
+  site: 'https://linorg.usp.br/cygwin/'
+    description: Download site URLs separated by whitespace
+    required: false
+  add-to-path:
+    description: Should Cygwin's bin directory be added to the system PATH?
+    required: false
+    default: true
+  allow-test-packages:
+    description: Consider package versions marked test
+    required: false
+    default: false
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        $platform = '${{ inputs.platform }}'
+        $platform = $platform -replace '^(x64|amd64)$', 'x86_64'
+        $platform = $platform -replace '^i686$', 'x86'
+        # validate that platform is one of the expected values
+        if (($platform -ne 'x86') -and ($platform -ne 'x86_64')) {
+          echo "unknown platform $platform"
+          exit 1
+        }
+        Invoke-WebRequest https://cygwin.com/setup-$platform.exe -OutFile C:\setup.exe
 
-jobs:
-  build:
-    runs-on: windows-latest
+        $packages = '${{ inputs.packages }}'
+        $pkg_list = $packages.Split('', [System.StringSplitOptions]::RemoveEmptyEntries)
+        $pkg_list = $pkg_list | % { $_.Trim() }
+        $pkg_list = $pkg_list | % { $_.Trim(',') }
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+        $args = @(
+         '-qgnO',
+         '-l', 'C:\cygwin-packages',
+         '-R', '${{ inputs.install-dir }}'
+        )
 
-      - name: Download and install Cygwin
-        run: |
-          mkdir c:\cygwin64
-          cd c:\cygwin64
-          Invoke-WebRequest -Uri https://cygwin.com/setup-x86_64.exe -OutFile setup-x86_64.exe
-          .\setup-x86_64.exe --root c:\cygwin64 -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P ldd -s https://linorg.usp.br/cygwin/
+        if ( '${{ inputs.allow-test-packages }}' ) {
+          $args += '-t' # --allow-test-packages
+        }
 
-      - name: Open Cygwin
-        run: |
-          cd c:\cygwin64
-          dir
-          cmd.exe /c ".\Cygwin.bat"
+        # default site if not specified
+        if ( '${{ inputs.site }}' ) {
+          $sites = '${{ inputs.site }}'
+        } elseif ($platform -eq 'x86') {
+          $sites = 'http://mirrors.kernel.org/sourceware/cygwin-archive/20221123'
+        } else {
+          $sites = 'http://mirrors.kernel.org/sourceware/cygwin/'
+        }
+        $site_list = $sites.Split('', [System.StringSplitOptions]::RemoveEmptyEntries)
+        $site_list = $site_list | % { $_.Trim() }
+        foreach ($site in $site_list) {
+          $args += '-s'
+          $args += $site
+        }
 
-      - name: Download 3.0 HAProxy source code
-        run: |
-          wget https://www.haproxy.org/download/3.0/src/devel/haproxy-3.0-dev1.tar.gz
-          tar xzvf haproxy-3.0-dev1.tar.gz
-          rm -rf ./haproxy-3.0-dev1.tar.gz 
-          cd haproxy-3.0-dev1
-          
-      - name: Build HAProxy
-        run: |
-          make TARGET=cygwin USE_OPENSSL=1 USE_ZLIB=1
+        if ($pkg_list.Count -gt 0) {
+          $args += '-P'
+          $args += $pkg_list -Join(',')
+        }
 
-      - name: Copy HAProxy executable and dependencies
-        run: |
-          dependencies=$(ldd ./haproxy.exe | awk '{print $3}')
-          mkdir -p /cygdrive/c/haproxy-3.0
-          cp ./haproxy.exe /cygdrive/c/haproxy-3.0
-          for dep in $dependencies; do
-              cp "$dep" /cygdrive/c/haproxy-3.0
-          done
-          cd ..
-          rm -rf ./haproxy-*/
-          exit
+        if ('${{ inputs.check-sig }}' -eq $false) {
+          $args += '-X'
+        }
 
-      - name: Test HAProxy
-        run: |
-          cd C:\haproxy-3.0
-          haproxy.exe -v
+        if ( '${{ inputs.pubkeys }}' ) {
+          $pubkeys = '${{ inputs.pubkeys }}'
+          $pubkey_list = $pubkeys.Split('', [System.StringSplitOptions]::RemoveEmptyEntries)
+          $pubkey_list = $pubkey_list | % { $_.Trim() }
+          foreach ($pubkey in $pubkey_list) {
+            $args += '-K'
+            $args += $pubkey
+          }
+        }
+
+        if ($platform -eq 'x86') {
+          $args += '--allow-unsupported-windows'
+        }
+
+        # because setup is a Windows GUI app, make it part of a pipeline to make
+        # PowerShell wait for it to exit
+        & C:\setup.exe $args | Out-Default
+      shell: powershell
+
+    - if: ${{ inputs.add-to-path  == 'true' }}
+      run: echo "${{ inputs.install-dir }}\bin" >> $env:GITHUB_PATH
+      shell: powershell
+
+    - run: |
+        # run login shell to copy skeleton profile files
+        ${{ inputs.install-dir }}\bin\bash.exe --login
+      shell: powershell
+
+branding:
+  color: green
+  icon: terminal
