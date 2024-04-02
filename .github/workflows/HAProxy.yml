@@ -26,6 +26,7 @@ jobs:
 
       - name: Open Cygwin
         run: |
+          cd c:\cygwin64
           dir
           cmd.exe /c ".\Cygwin.bat"
 
