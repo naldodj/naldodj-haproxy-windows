@@ -21,7 +21,7 @@ jobs:
           mkdir c:\cygwin64
           cd c:\cygwin64
           Invoke-WebRequest -Uri https://cygwin.com/setup-x86_64.exe -OutFile setup-x86_64.exe
-          .\setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P ldd
+          .\setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P ldd -s https://linorg.usp.br/cygwin/
           .\Cygwin.bat
 
       - name: Download latest HAProxy source code
