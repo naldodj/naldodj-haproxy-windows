@@ -1,126 +1,259 @@
-name: Install Cygwin Action
-description: GitHub Action to install Cygwin
+name: Test
 
-inputs:
-  platform:
-    description: Platform [x86, x86_64]
-    required: false
-    default: x86_64
-    packages: >-
-      wget
-      gcc-g++
-      make
-      libssl-devel
-      zlib-devel
-      ldd
-    description: Packages to install
-    required: false
-  install-dir:
-    # by default, install to C:\cygwin rather than the platform dependent
-    # default to make everything simpler
-    description: Installation directory
-    required: false
-    default: C:\cygwin
-  check-sig:
-    description: Should the setup.ini file signature be checked?
-    required: false
-    default: true
-  pubkeys:
-    description: Absolute paths of extra public key files (RFC4880 format), separated by whitespace
-    required: false
-  site: 'https://linorg.usp.br/cygwin/'
-    description: Download site URLs separated by whitespace
-    required: false
-  add-to-path:
-    description: Should Cygwin's bin directory be added to the system PATH?
-    required: false
-    default: true
-  allow-test-packages:
-    description: Consider package versions marked test
-    required: false
-    default: false
+on: [push, pull_request]
 
-runs:
-  using: "composite"
-  steps:
-    - run: |
-        $platform = '${{ inputs.platform }}'
-        $platform = $platform -replace '^(x64|amd64)$', 'x86_64'
-        $platform = $platform -replace '^i686$', 'x86'
-        # validate that platform is one of the expected values
-        if (($platform -ne 'x86') -and ($platform -ne 'x86_64')) {
-          echo "unknown platform $platform"
+jobs:
+  test:
+    runs-on: windows-latest
+    strategy:
+       matrix:
+         include:
+           - platform: 'x86_64'
+           - platform: 'x86'
+             packages: >-
+               coreutils
+               moreutils
+           - platform: 'amd64'
+             packages: |
+               coreutils,
+               moreutils
+       fail-fast: false
+
+    name: 'Test ${{ matrix.platform }}'
+
+    steps:
+    - run: git config --global core.autocrlf input
+
+    - uses: actions/checkout@v2
+
+    - name: Install Cygwin
+      uses: ./
+      with:
+        platform: ${{ matrix.platform }}
+        packages: ${{ matrix.packages }}
+        add-to-path: false
+
+    - name: Explicitly running shell
+      run: C:\cygwin\bin\bash -lc "echo 'Explicitly run shell'"
+
+    - name: Single-line inline shell
+      run: echo "Running in $(pwd)"
+      shell: C:\cygwin\bin\bash.exe '{0}'
+
+    - name: Multiline inline shell
+      run: >-
+        echo "Running in $(pwd)" &&
+        true
+      shell: C:\cygwin\bin\bash.exe '{0}'
+
+    - name: Shell script
+      run: C:\cygwin\bin\bash.exe tests/script.sh
+
+    - name: Check requested packages got installed
+      run: C:\cygwin\bin\sponge.exe tmp
+      if: contains(matrix.packages, 'moreutils')
+
+    - name: Check PATH hasn't changed
+      run: |
+        if [[ "${OSTYPE}" = "cygwin" ]]; then
+          echo "unexpectedly using Cygwin Bash"
           exit 1
-        }
-        Invoke-WebRequest https://cygwin.com/setup-$platform.exe -OutFile C:\setup.exe
+        fi
 
-        $packages = '${{ inputs.packages }}'
-        $pkg_list = $packages.Split('', [System.StringSplitOptions]::RemoveEmptyEntries)
-        $pkg_list = $pkg_list | % { $_.Trim() }
-        $pkg_list = $pkg_list | % { $_.Trim(',') }
+        if [[ "$(cygpath -aw "$(which cygpath)")" = 'C:\cygwin\'* ]]; then
+          echo "unexpectedly using Cygwin cygpath"
+          exit 1
+        fi
+      shell: bash  # If Cygwin is not in PATH -- as expected -- this will be Git Bash
+      env:
+        SHELLOPTS: igncr
 
-        $args = @(
-         '-qgnO',
-         '-l', 'C:\cygwin-packages',
-         '-R', '${{ inputs.install-dir }}'
-        )
+  complex-test:
+    runs-on: windows-latest
+    name: 'Complex Test'
 
-        if ( '${{ inputs.allow-test-packages }}' ) {
-          $args += '-t' # --allow-test-packages
-        }
+    strategy:
+       matrix:
+         include:
+           - combination: 1
 
-        # default site if not specified
-        if ( '${{ inputs.site }}' ) {
-          $sites = '${{ inputs.site }}'
-        } elseif ($platform -eq 'x86') {
-          $sites = 'http://mirrors.kernel.org/sourceware/cygwin-archive/20221123'
-        } else {
-          $sites = 'http://mirrors.kernel.org/sourceware/cygwin/'
-        }
-        $site_list = $sites.Split('', [System.StringSplitOptions]::RemoveEmptyEntries)
-        $site_list = $site_list | % { $_.Trim() }
-        foreach ($site in $site_list) {
-          $args += '-s'
-          $args += $site
-        }
+    defaults:
+      run:
+        shell: C:\cygwin\bin\bash.exe --noprofile --norc -o igncr -eo pipefail '{0}'
 
-        if ($pkg_list.Count -gt 0) {
-          $args += '-P'
-          $args += $pkg_list -Join(',')
-        }
+    steps:
+    - run: git config --global core.autocrlf input
+      shell: pwsh -command ". '{0}'".
 
-        if ('${{ inputs.check-sig }}' -eq $false) {
-          $args += '-X'
-        }
+    - uses: actions/checkout@v2
 
-        if ( '${{ inputs.pubkeys }}' ) {
-          $pubkeys = '${{ inputs.pubkeys }}'
-          $pubkey_list = $pubkeys.Split('', [System.StringSplitOptions]::RemoveEmptyEntries)
-          $pubkey_list = $pubkey_list | % { $_.Trim() }
-          foreach ($pubkey in $pubkey_list) {
-            $args += '-K'
-            $args += $pubkey
-          }
-        }
+    - name: Install Cygwin
+      uses: ./
 
-        if ($platform -eq 'x86') {
-          $args += '--allow-unsupported-windows'
-        }
+    - name: Run one
+      run: |
+        echo
+        echo "One"
+        echo
 
-        # because setup is a Windows GUI app, make it part of a pipeline to make
-        # PowerShell wait for it to exit
-        & C:\setup.exe $args | Out-Default
-      shell: powershell
+    - name: Run two
+      run: |
+        if [[ '${{ matrix.combination }}' == "${COMBINATION}" ]]; then
+          echo "It's true: ${COMBINATION} satisfied"
+        else
+          exit 1
+        fi
 
-    - if: ${{ inputs.add-to-path  == 'true' }}
-      run: echo "${{ inputs.install-dir }}\bin" >> $env:GITHUB_PATH
-      shell: powershell
+        echo
+        echo "Two"
+        echo
+      env:
+        COMBINATION: 1
 
-    - run: |
-        # run login shell to copy skeleton profile files
-        ${{ inputs.install-dir }}\bin\bash.exe --login
-      shell: powershell
+  install-dir-test:
+    runs-on: windows-latest
+    name: 'Check install directory behaviour'
 
-branding:
-  color: green
-  icon: terminal
+    strategy:
+      matrix:
+        include:
+          - install-dir: C:\tools\cygwin
+          - install-dir: D:\cygwin64
+
+    steps:
+    - run: git config --global core.autocrlf input
+
+    - uses: actions/checkout@v2
+
+    - name: Install Cygwin
+      uses: ./
+      with:
+        install-dir: "${{ matrix.install-dir }}"
+
+    - name: Check install directory
+      run: |
+        if [[ "$(cygpath -aw /)" == '${{ matrix.install-dir }}' ]]; then
+          echo "Installed in $(cygpath -aw /)"
+        else
+          exit 1
+        fi
+
+        if [[ "${OSTYPE}" != "cygwin" ]]; then
+          echo "unexpected OSTYPE ${OSTYPE}"
+          exit 1
+        fi
+
+      # Only specify the shell by name; GitHub actions should find the correct
+      # executable thanks to the action setting the path appropriately.
+      shell: bash
+      env:
+        SHELLOPTS: igncr
+
+  symlink-test:
+    runs-on: windows-latest
+    name: 'Check symlink type control'
+
+    strategy:
+      matrix:
+        include:
+          - symlink-type: native
+          - symlink-type: sys
+          - symlink-type: wsl
+
+    env:
+      CYGWIN: winsymlinks:${{ matrix.symlink-type }}
+
+    steps:
+    - run: git config --global core.autocrlf input
+
+    - uses: actions/checkout@v2
+
+    - name: Install Cygwin
+      uses: ./
+
+    - name: Check symlink
+      run: bash tests/symlink.sh
+
+  time-machine:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+
+    name: 'Test time machine signature'
+
+    steps:
+    - run: git config --global core.autocrlf input
+
+    - uses: actions/checkout@v2
+
+    - name: Install Cygwin
+      uses: ./
+      with:
+        site: http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/circa/64bit/2021/01/22/181752
+        check-sig: false
+
+    - name: Check cygwin version
+      run: |
+        cygcheck -cd cygwin | grep -qF 3.1.7-1
+      shell: C:\cygwin\bin\bash.exe --noprofile --norc -o igncr -eo pipefail '{0}'
+
+  bad-sig:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+
+    name: 'Test failure of time machine signature'
+
+    steps:
+    - run: git config --global core.autocrlf input
+
+    - uses: actions/checkout@v2
+
+    - name: Fail to install Cygwin
+      uses: ./
+      with:
+        site: http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/circa/64bit/2021/01/22/181752
+      continue-on-error: true
+
+    # The install step should have failed due to the duff signature.  Check
+    # that by trying to run Bash: if Cygwin were installed correctly, we'd run
+    # Cygwin Bash; if it isn't, we'll run one of the non-Cygwin Bash
+    # executables provided by the GitHub runner.
+    - name: Check Cygwin isn't installed
+      run: |
+        if [[ "${OSTYPE}" = "cygwin" ]]; then
+          echo "Unexpectedly running Cygwin"
+          exit 1
+        fi
+      shell: bash
+      env:
+        SHELLOPTS: igncr
+
+  multiple-sites-and-pubkeys:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+
+    name: 'Test multiple sites and extra pubkeys'
+
+    steps:
+    - run: git config --global core.autocrlf input
+
+    - uses: actions/checkout@v2
+
+    - name: Run repo HTTP server
+      uses: Eun/http-server-action@v1.0.6
+      with:
+        directory: ${{ github.workspace }}\tests\repo
+
+    - name: Install Cygwin
+      uses: ./
+      with:
+        site: |
+          http://localhost:8080
+          http://mirrors.kernel.org/sourceware/cygwin/
+        packages: cygwin-install-action-test
+        pubkeys: ${{ github.workspace }}\tests\repo\key.pub
+
+    - name: Run test shell script
+      run: C:\cygwin\bin\bash.exe /cygwin-install-action-test.sh
