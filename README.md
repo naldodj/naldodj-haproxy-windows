@@ -1,5 +1,5 @@
 <div align="center">
-    <h1>haproxy-windows haproxy-3.0-dev1</h1>
+    <h1>haproxy-windows haproxy-3.1-dev1</h1>
     <img src="./HAProxyCE.png" width="250" />
     <p align="center">
         HAProxy Community Edition For Windows. 
@@ -62,14 +62,14 @@ Compilation and installation of HAProxy in Windows
     ```
 4. Download source code (inside cygwin64 terminal)
     ```
-    wget https://www.haproxy.org/download/3.0/src/devel/haproxy-3.0-dev1.tar.gz
-    tar xzvf haproxy-3.0-dev1.tar.gz
-    rm -rf ./haproxy-3.0-dev1.tar.gz 
-    cd haproxy-3.0-dev1
+    wget https://www.haproxy.org/download/3.1/src/devel/haproxy-3.1-dev1.tar.gz
+    tar xzvf haproxy-3.1-dev1.tar.gz
+    rm -rf ./haproxy-3.1-dev1.tar.gz 
+    cd haproxy-3.1-dev1
     ```
 5. Build (inside cygwin64 terminal)
     ```
-    make TARGET=cygwin USE_OPENSSL=1 USE_ZLIB=1
+    make TARGET=cygwin USE_OPENSSL=3.0 USE_ZLIB=1.3.1
     ```
 6. Copy `haproxy.exe` and all dependencies (.dll)
     ```
@@ -77,23 +77,23 @@ Compilation and installation of HAProxy in Windows
     dependencies=$(ldd ./haproxy.exe | awk '{print $3}')
    
     # create a folder in C:/
-    mkdir -p /cygdrive/c/haproxy-3.0
+    mkdir -p /cygdrive/c/haproxy-3.1
    
     # copy all
-    cp ./haproxy.exe /cygdrive/c/haproxy-3.0
+    cp ./haproxy.exe /cygdrive/c/haproxy-3.1
     for dep in $dependencies; do
-        cp "$dep" /cygdrive/c/haproxy-3.0
+        cp "$dep" /cygdrive/c/haproxy-3.1
     done
    
     # delete trash
     cd ..
-    rm -rf ./haproxy-3.0-dev1
+    rm -rf ./haproxy-3.1-dev1
    
-    # exit cygwin6 terminal
+    # exit cygwin64 terminal
     exit
     ```
 7. On cmd, you can test haproxy
     ```
-    cd C:\haproxy-3.0
+    cd C:\haproxy-3.1
     haproxy.exe -v
     ```
