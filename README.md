@@ -1,11 +1,10 @@
 <div align="center">
-    <h1>haproxy-windows haproxy-3.1-dev1</h1>
+    <h1>haproxy-windows haproxy-3.2-dev0</h1>
     <img src="./HAProxyCE.png" width="250" />
     <p align="center">
         HAProxy Community Edition For Windows. 
     </p>    
 </div>
-
 <br>
 
 **HAProxy** The Reliable, High Performance TCP/HTTP Load Balancer
@@ -16,6 +15,23 @@ HAProxy is a free, very fast and reliable solution offering [high availability](
  It is particularly suited for very high traffic web sites and powers quite a number of the world's most visited ones. 
  Over the years it has become the de-facto standard opensource load balancer, is now shipped with most mainstream 
  Linux distributions, and is often deployed by default in cloud platforms.
+
+<div align="center">
+    <h1>LUA</h1>
+    <img src="https://lua.org/images/luaa.gif" width="250" />
+    <p align="center">
+        LUA 
+    </p>    
+</div>
+<br>
+ 
+ What is Lua?
+ Lua is a powerful, efficient, lightweight, embeddable scripting language. It supports procedural programming, object-oriented programming, functional programming, data-driven 
+ programming, and data description.
+
+ Lua combines simple procedural syntax with powerful data description constructs based on associative arrays and extensible semantics. Lua is dynamically typed, runs by interpreting 
+ bytecode with a register-based virtual machine, and has automatic memory management with incremental garbage collection, making it ideal for configuration, scripting, and rapid 
+ prototyping.
 
 #### QuickStart(use quiet mode)
 
@@ -54,7 +70,7 @@ Compilation and installation of HAProxy in Windows
 2. On terminal (cmd), install gcc, make and libs
     ```
     cd c:\cygwin64
-    setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P ldd
+    setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P ldd -P lua-devel
     ```
 3. Open the cygwin64 terminal
     ```
@@ -62,14 +78,15 @@ Compilation and installation of HAProxy in Windows
     ```
 4. Download source code (inside cygwin64 terminal)
     ```
-    wget https://www.haproxy.org/download/3.1/src/devel/haproxy-3.1-dev1.tar.gz
-    tar xzvf haproxy-3.1-dev1.tar.gz
-    rm -rf ./haproxy-3.1-dev1.tar.gz 
-    cd haproxy-3.1-dev1
+        wget https://www.haproxy.org/download/3.2/src/devel/haproxy-3.2-dev0.tar.gz
+        tar xzvf haproxy-3.2-dev0.tar.gz
+        rm -rf ./haproxy-3.2-dev0.tar.gz 
+        cd haproxy-3.2-dev0
     ```
 5. Build (inside cygwin64 terminal)
     ```
-    make TARGET=cygwin USE_OPENSSL=3.0 USE_ZLIB=1.3.1
+    sed -i 's/--export-dynamic/--export-all-symbols/g' Makefile
+    make TARGET=cygwin USE_OPENSSL=3.0 USE_ZLIB=1.3.1 USE_PCRE=1 USE_LUA=1 LUA_LIB=/usr/lib LUA_INC=/usr/include/lua5.3 LUA_LIB_NAME=lua5.3
     ```
 6. Copy `haproxy.exe` and all dependencies (.dll)
     ```
@@ -77,23 +94,24 @@ Compilation and installation of HAProxy in Windows
     dependencies=$(ldd ./haproxy.exe | awk '{print $3}')
    
     # create a folder in C:/
-    mkdir -p /cygdrive/c/haproxy-3.1
+    mkdir -p /cygdrive/c/haproxy-3.2
    
     # copy all
-    cp ./haproxy.exe /cygdrive/c/haproxy-3.1
+    cp ./haproxy.exe /cygdrive/c/haproxy-3.2
     for dep in $dependencies; do
-        cp "$dep" /cygdrive/c/haproxy-3.1
+        cp "$dep" /cygdrive/c/haproxy-3.2
     done
    
     # delete trash
     cd ..
-    rm -rf ./haproxy-3.1-dev1
+    rm -rf ./haproxy-3.2-dev0
    
     # exit cygwin64 terminal
     exit
     ```
 7. On cmd, you can test haproxy
     ```
-    cd C:\haproxy-3.1
-    haproxy.exe -v
+    cd C:\haproxy-3.2
+    .\haproxy.exe -v 
+    .\haproxy.exe -vv 
     ```
