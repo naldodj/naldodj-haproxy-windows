@@ -20,12 +20,12 @@ HAProxy is a free, very fast and reliable solution offering [high availability](
     <h1>LUA</h1>
     <img src="https://lua.org/images/luaa.gif" width="250" />
     <p align="center">
-        LUA 
+        LUA
     </p>    
 </div>
 <br>
  
- What is Lua?
+ What is [Lua](https://lua.org/)?
  Lua is a powerful, efficient, lightweight, embeddable scripting language. It supports procedural programming, object-oriented programming, functional programming, data-driven 
  programming, and data description.
 
