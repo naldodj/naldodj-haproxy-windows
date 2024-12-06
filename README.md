@@ -33,6 +33,8 @@ HAProxy is a free, very fast and reliable solution offering [high availability](
  bytecode with a register-based virtual machine, and has automatic memory management with incremental garbage collection, making it ideal for configuration, scripting, and rapid 
  prototyping.
 
+ [Your Starter Guide to Using the HAProxy Lua Event Framework](https://www.haproxy.com/blog/your-starter-guide-to-using-the-haproxy-lua-event-framework)
+
 #### QuickStart(use quiet mode)
 
     haproxy.exe -f haproxy.config.json -q -D
