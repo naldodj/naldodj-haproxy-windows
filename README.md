@@ -70,27 +70,40 @@ Compilation and installation of HAProxy in Windows
 
 1. Download and Install cygwin (<https://cygwin.com/setup-x86_64.exe>), after installation, copy `setup-x86_64.exe` to `c:\cygwin64`
 2. On terminal (cmd), install gcc, make and libs
+    ### lua5.3
     ```
     cd c:\cygwin64
-    setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P ldd -P lua-devel
+    .\setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P lua-devel
     ```
-3. Open the cygwin64 terminal
+    ### lua5.4
+    ```
+    cd c:\cygwin64
+    .\setup-x86_64.exe -q -f -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P lua-devel -P liblua-devel -P lighttpd-lua-modules -P lua
+    ```
+    
+4. Open the cygwin64 terminal
     ```
     Cygwin.bat
     ```
-4. Download source code (inside cygwin64 terminal)
+5. Download source code (inside cygwin64 terminal)
     ```
         wget https://www.haproxy.org/download/3.2/src/devel/haproxy-3.2-dev0.tar.gz
         tar xzvf haproxy-3.2-dev0.tar.gz
         rm -rf ./haproxy-3.2-dev0.tar.gz 
         cd haproxy-3.2-dev0
     ```
-5. Build (inside cygwin64 terminal)
+6. Build (inside cygwin64 terminal)
+    ### lua5.3
     ```
     sed -i 's/--export-dynamic/--export-all-symbols/g' Makefile
     make TARGET=cygwin USE_OPENSSL=3.0 USE_ZLIB=1.3.1 USE_PCRE=1 USE_LUA=1 LUA_LIB=/usr/lib LUA_INC=/usr/include/lua5.3 LUA_LIB_NAME=lua5.3
     ```
-6. Copy `haproxy.exe` and all dependencies (.dll)
+    ### lua5.4
+    ```
+    sed -i 's/--export-dynamic/--export-all-symbols/g' Makefile
+    make TARGET=cygwin USE_OPENSSL=3.0 USE_ZLIB=1.3.1 USE_PCRE=1 USE_LUA=1 LUA_LIB=/usr/lib LUA_INC=/usr/include/lua5.4 LUA_LIB_NAME=lua5.4
+    ```    
+8. Copy `haproxy.exe` and all dependencies (.dll)
     ```
     # show dependencies
     dependencies=$(ldd ./haproxy.exe | awk '{print $3}')
@@ -111,7 +124,7 @@ Compilation and installation of HAProxy in Windows
     # exit cygwin64 terminal
     exit
     ```
-7. On cmd, you can test haproxy
+9. On cmd, you can test haproxy
     ```
     cd C:\haproxy-3.2
     .\haproxy.exe -v 
