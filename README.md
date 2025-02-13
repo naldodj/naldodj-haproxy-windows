@@ -73,12 +73,12 @@ Compilation and installation of HAProxy in Windows
     ### lua5.3
     ```
     cd c:\cygwin64
-    .\setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P lua-devel
+    .\setup-x86_64.exe -q -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P lua-devel -P libpcre-devel
     ```
     ### lua5.4
     ```
     cd c:\cygwin64
-    .\setup-x86_64.exe -q -f -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P lua-devel -P liblua-devel -P lighttpd-lua-modules -P lua
+    .\setup-x86_64.exe -q -f -P wget -P gcc-g++ -P make -P libssl-devel -P zlib-devel -P lua-devel -P liblua-devel -P lighttpd-lua-modules -P lua -P libpcre-devel
     ```
     
 4. Open the cygwin64 terminal
